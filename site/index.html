@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>AR 景點 · See it in your space · XO Tours</title>
+<!--
+  AR landmark viewer (the "AR Code" idea: scan a QR, place a life-size 3D scan of a
+  landmark in front of you, no app). Models + pipeline: ../README.md. Built and published by GitHub Actions (Pages).
+  Phone: <model-viewer> offers AR (iOS Quick Look / Android Scene Viewer / WebXR).
+  Desktop: shows a QR of this page so the visitor opens it on a phone.
+-->
+<style>
+  :root{
+    --bg:#0f1216;--panel:#171c23;--panel2:#1f2630;--line:#2b3440;--text:#f2f4f7;--muted:#9aa5b4;
+    --accent:#ff8a3d;--accent2:#ffb07a;--link:#7cc4ff;--radius:14px;--shadow:0 10px 30px rgba(0,0,0,.45);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang TC","Microsoft JhengHei","Noto Sans TC",Roboto,sans-serif}
+  a{color:var(--link)}
+  button{font:inherit;cursor:pointer;border:0;border-radius:10px}
+  .wrap{max-width:1100px;margin:0 auto;padding:16px}
+  .topbar{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin-bottom:12px}
+  .brand{letter-spacing:.18em;text-transform:uppercase}
+  .lang button{background:transparent;color:var(--muted);padding:4px 8px;border:1px solid var(--line);border-radius:999px;font-size:12px}
+  .lang button.on{color:var(--text);border-color:var(--accent);background:rgba(255,138,61,.12)}
+  h1{font-size:26px;margin:0 0 4px;line-height:1.2}
+  .lead{color:var(--muted);margin:0 0 16px}
+
+  .stage{display:grid;grid-template-columns:1fr 300px;gap:16px;align-items:start}
+  @media (max-width:820px){.stage{grid-template-columns:1fr}}
+  .viewer{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;position:relative}
+  model-viewer{width:100%;height:min(70vh,640px);background:radial-gradient(ellipse at 50% 85%,#2a3340 0,#171c23 65%);--poster-color:transparent}
+  .ar-btn{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);background:var(--accent);color:#1a1200;font-weight:700;padding:13px 22px;font-size:16px;border-radius:999px;box-shadow:0 4px 14px rgba(255,138,61,.4);white-space:nowrap;display:flex;gap:8px;align-items:center}
+  .ar-btn:hover{background:var(--accent2)}
+  .ar-btn svg{width:20px;height:20px}
+  .progress{position:absolute;left:0;top:0;height:3px;background:var(--accent);width:0;transition:width .2s}
+  .loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px;pointer-events:none}
+
+  .side{display:flex;flex-direction:column;gap:12px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
+  .card h2{font-size:17px;margin:0 0 6px}
+  .card p{margin:0 0 8px;color:var(--muted);font-size:13px}
+  .card .credit{font-size:11px;color:#6f7a89}
+  #qr{display:block;width:100%;max-width:240px;margin:6px auto 8px;background:#fff;padding:10px;border-radius:10px}
+  #qr canvas,#qr img{display:block;width:100%;height:auto}
+  .only-phone{display:none}
+  .is-phone .only-phone{display:block}
+  .is-phone .only-desktop{display:none}
+  .hidden{display:none!important}
+
+  .gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:16px}
+  .tile{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px;color:var(--text);text-decoration:none;font-size:13px}
+  .tile.on{border-color:var(--accent)}
+  .tile small{display:block;color:var(--muted)}
+  .foot{margin-top:18px;font-size:12px;color:#6f7a89}
+</style>
+<script src="vendor/qrcode/qrcode.js"></script>
+<script type="module" src="vendor/model-viewer/model-viewer.min.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <span class="brand">XO Tours · AR</span>
+    <span class="lang"><button data-lang="zh" class="on">中文</button> <button data-lang="en">EN</button></span>
+  </div>
+  <h1 data-zh="把景點放到你眼前" data-en="Put the landmark in front of you">把景點放到你眼前</h1>
+  <p class="lead" data-zh="真實景點的 3D 掃描，用手機就能以實際大小放進你的客廳、辦公室或花園，不用安裝任何 App。" data-en="A 3D scan of a real landmark, placed life-size in your living room, office or garden straight from your phone. No app to install.">真實景點的 3D 掃描，用手機就能以實際大小放進你的客廳、辦公室或花園，不用安裝任何 App。</p>
+
+  <div class="stage">
+    <div class="viewer">
+      <div class="progress" id="progress"></div>
+      <model-viewer id="mv"
+        ar ar-modes="webxr scene-viewer quick-look" ar-scale="fixed" ar-placement="floor"
+        camera-controls touch-action="pan-y" auto-rotate rotation-per-second="12deg"
+        shadow-intensity="1" shadow-softness="0.8" exposure="1.05" environment-image="neutral"
+        camera-orbit="25deg 78deg auto" min-camera-orbit="auto 40deg auto" max-camera-orbit="auto 95deg auto"
+        interaction-prompt="auto" loading="eager" reveal="auto" alt="3D landmark">
+        <button slot="ar-button" class="ar-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M12 7l5 2.5v5L12 17l-5-2.5v-5L12 7z"/><path d="M12 12l5-2.5M12 12v5M12 12L7 9.5"/></svg>
+          <span data-zh="放到我眼前" data-en="View in your space">放到我眼前</span>
+        </button>
+        <div slot="poster" class="loading" data-zh="載入 3D 模型…" data-en="Loading 3D model…">載入 3D 模型…</div>
+      </model-viewer>
+    </div>
+
+    <div class="side">
+      <div class="card">
+        <h2 id="mTitle"></h2>
+        <p id="mCaption"></p>
+        <p class="credit" id="mCredit"></p>
+      </div>
+      <div class="card only-desktop">
+        <h2 data-zh="用手機掃描" data-en="Scan with your phone">用手機掃描</h2>
+        <div id="qr"></div>
+        <p data-zh="電腦看不到 AR。用 iPhone 或 Android 相機掃這個碼，網頁開啟後按「放到我眼前」，雕像就會以實際大小出現在你的空間裡。" data-en="AR needs a phone. Scan this with the iPhone or Android camera, tap “View in your space” on the page that opens, and the statue appears life-size in your room.">電腦看不到 AR。用 iPhone 或 Android 相機掃這個碼，網頁開啟後按「放到我眼前」，雕像就會以實際大小出現在你的空間裡。</p>
+      </div>
+      <div class="card only-phone">
+        <h2 data-zh="怎麼用" data-en="How to">怎麼用</h2>
+        <p data-zh="1. 按「放到我眼前」。 2. 把鏡頭對著地板慢慢移動，直到看到模型。 3. 拖曳移動、兩指旋轉，走近看細節。" data-en="1. Tap “View in your space”. 2. Point the camera at the floor and move slowly until the model appears. 3. Drag to move, two fingers to rotate, walk up for detail.">1. 按「放到我眼前」。 2. 把鏡頭對著地板慢慢移動，直到看到模型。 3. 拖曳移動、兩指旋轉，走近看細節。</p>
+        <p id="noAr" class="hidden" data-zh="這個瀏覽器不支援 AR。iPhone 請用 Safari，Android 請用 Chrome。" data-en="This browser can’t do AR. Use Safari on iPhone or Chrome on Android.">這個瀏覽器不支援 AR。iPhone 請用 Safari，Android 請用 Chrome。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="gallery" id="gallery"></div>
+  <p class="foot" data-zh="模型由 iPhone「物件擷取」掃描真實景點製作；3D 顯示採用 Google model-viewer，AR 在 iOS 使用 Quick Look、Android 使用 Scene Viewer。" data-en="Models are made by scanning the real landmark with iPhone Object Capture; rendered with Google model-viewer, AR via Quick Look on iOS and Scene Viewer on Android.">模型由 iPhone「物件擷取」掃描真實景點製作；3D 顯示採用 Google model-viewer，AR 在 iOS 使用 Quick Look、Android 使用 Scene Viewer。</p>
+</div>
+
+<script>
+(function(){
+  var lang = (localStorage.getItem('xo_ar_lang') || ((navigator.language||'').toLowerCase().indexOf('zh')===0 ? 'zh' : 'en'));
+  var models = [], current = null;
+  var mv = document.getElementById('mv');
+  var isPhone = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && window.innerWidth < 900);
+  if (isPhone) document.body.classList.add('is-phone');
+
+  function t(o){ return o ? (o[lang] || o.zh || o.en || '') : ''; }
+  function applyLang(){
+    document.documentElement.lang = lang === 'zh' ? 'zh-Hant' : 'en';
+    document.querySelectorAll('[data-zh]').forEach(function(el){ el.textContent = el.getAttribute('data-' + lang) || el.getAttribute('data-zh'); });
+    document.querySelectorAll('.lang button').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-lang') === lang); });
+    if (current) describe(current);
+    renderGallery();
+  }
+  document.querySelectorAll('.lang button').forEach(function(b){
+    b.addEventListener('click', function(){ lang = b.getAttribute('data-lang'); localStorage.setItem('xo_ar_lang', lang); applyLang(); });
+  });
+
+  function describe(m){
+    document.getElementById('mTitle').textContent = t(m.title);
+    document.getElementById('mCaption').textContent = t(m.caption);
+    document.getElementById('mCredit').textContent = m.credit || '';
+    document.title = t(m.title) + ' · AR · XO Tours';
+  }
+  function load(m, push){
+    current = m;
+    mv.setAttribute('src', m.glb);
+    if (m.usdz) mv.setAttribute('ios-src', m.usdz); else mv.removeAttribute('ios-src');
+    mv.setAttribute('ar-placement', m.placement || 'floor');
+    mv.setAttribute('ar-scale', m.scale || 'fixed');
+    mv.setAttribute('alt', t(m.title));
+    describe(m);
+    if (push) history.replaceState(null, '', '?m=' + encodeURIComponent(m.id));
+    drawQR(); renderGallery();
+  }
+  function renderGallery(){
+    var g = document.getElementById('gallery'); g.innerHTML = '';
+    if (models.length < 2) return;
+    models.forEach(function(m){
+      var a = document.createElement('a'); a.href = '?m=' + encodeURIComponent(m.id); a.className = 'tile' + (current && m.id === current.id ? ' on' : '');
+      a.innerHTML = '<b></b><small></small>'; a.querySelector('b').textContent = t(m.title); a.querySelector('small').textContent = (m.height_m ? m.height_m + ' m' : '');
+      a.addEventListener('click', function(e){ e.preventDefault(); load(m, true); window.scrollTo({top:0,behavior:'smooth'}); });
+      g.appendChild(a);
+    });
+  }
+  function drawQR(){
+    var box = document.getElementById('qr'); box.innerHTML = '';
+    if (typeof qrcode !== 'function') return;
+    var url = location.origin + location.pathname + (current ? '?m=' + encodeURIComponent(current.id) : '');
+    var q = qrcode(0, 'M'); q.addData(url); q.make();
+    box.innerHTML = q.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
+    var svg = box.querySelector('svg'); if (svg) { svg.setAttribute('width','100%'); svg.removeAttribute('height'); svg.style.height='auto'; }
+  }
+
+  mv.addEventListener('progress', function(e){
+    var p = e.detail.totalProgress; document.getElementById('progress').style.width = (p*100) + '%';
+    if (p >= 1) setTimeout(function(){ document.getElementById('progress').style.width = '0'; }, 400);
+  });
+  mv.addEventListener('ar-status', function(e){
+    if (e.detail.status === 'failed') document.getElementById('noAr').classList.remove('hidden');
+  });
+  mv.addEventListener('load', function(){
+    if (isPhone && !mv.canActivateAR) document.getElementById('noAr').classList.remove('hidden');
+  });
+
+  fetch('models/index.json', {cache:'no-cache'}).then(function(r){ return r.json(); }).then(function(j){
+    models = (j && j.models) || [];
+    var want = new URLSearchParams(location.search).get('m');
+    var m = models.filter(function(x){ return x.id === want; })[0] || models[0];
+    applyLang();
+    if (m) load(m, false); else document.getElementById('mTitle').textContent = lang === 'zh' ? '目前沒有模型' : 'No models yet';
+  }).catch(function(){ document.getElementById('mTitle').textContent = 'index.json unreadable'; });
+})();
+</script>
+</body>
+</html>

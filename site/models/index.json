@@ -1,0 +1,18 @@
+{
+  "_comment": "Models shown by /ar.html. Each entry: id (URL ?m=), glb (required, metres, Y-up), usdz (optional - iOS Quick Look uses it directly, otherwise model-viewer converts the GLB on the fly), placement floor|wall, scale fixed (life-size) | auto. See the repo README for the scan-to-web pipeline.",
+  "models": [
+    {
+      "id": "statue-demo",
+      "glb": "models/statue-demo.glb",
+      "placement": "floor",
+      "scale": "fixed",
+      "height_m": 2.4,
+      "title": { "zh": "花園雕像（示範）", "en": "Garden statue (demo)" },
+      "caption": {
+        "zh": "示範模型：一座 2.4 公尺高的石灰岩基座與大理石半身像。真正的景點掃描完成後，只要把掃描檔放進 scans/，GitHub Actions 會自動轉檔並登記，就會在這裡出現。",
+        "en": "Demo model: a 2.4 m limestone pedestal with a marble bust. Once a real landmark is scanned, drop the scan into scans/ and register it in index.json and it appears here."
+      },
+      "credit": "Procedural demo built in Blender 4.5 - stand-in for an iPhone Object Capture scan"
+    }
+  ]
+}

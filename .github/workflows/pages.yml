@@ -1,0 +1,69 @@
+name: build-and-publish
+
+# Every push: Blender (headless, on the runner) builds the demo statue, converts any
+# scan dropped into scans/ (.usdz / .usd / .obj / .glb) into a web-ready GLB under
+# site/models/, registers new ones in site/models/index.json, and the site/ folder is
+# published to GitHub Pages. Nothing is rendered or converted on a PC.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      decimate:
+        description: decimate ratio for converted scans (blank = keep all faces)
+        default: ""
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/blender
+
+      - name: build the demo statue
+        env:
+          OUT_GLB: ${{ github.workspace }}/site/models/statue-demo.glb
+        run: ~/blender/blender -b --python scripts/make_statue.py 2>&1 | grep -E "WROTE|Error|Traceback" || true
+
+      - name: convert scans/ into site/models/
+        env:
+          DECIMATE: ${{ inputs.decimate }}
+        run: |
+          shopt -s nullglob nocaseglob
+          for f in scans/*.usdz scans/*.usd scans/*.usdc scans/*.usda scans/*.obj scans/*.glb scans/*.gltf; do
+            id=$(basename "${f%.*}" | tr -c 'A-Za-z0-9_-\n' '-' | tr 'A-Z' 'a-z')
+            echo "== $f -> site/models/$id.glb"
+            extra=""; [ -n "$DECIMATE" ] && extra="--decimate $DECIMATE"
+            ~/blender/blender -b --python scripts/convert_scan.py -- "$f" "site/models/$id.glb" $extra 2>&1 | grep -E "model height|decimated|WROTE|Error|Traceback"
+          done
+
+      - name: register new models in index.json
+        run: python3 scripts/register.py site/models
+
+      - name: list what will be published
+        run: ls -la site/models && cat site/models/index.json
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
