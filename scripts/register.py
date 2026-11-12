@@ -28,6 +28,11 @@ for name in sorted(os.listdir(folder)):
     })
     known.add(mid); added += 1
     print("registered", mid)
+# attach a native USDZ to every entry whose file exists (iOS Quick Look uses it directly)
+for m in data["models"]:
+    usdz = os.path.basename(m["glb"])[:-4] + ".usdz"
+    if os.path.exists(os.path.join(folder, usdz)):
+        m["usdz"] = f"models/{usdz}"
 missing = [m["id"] for m in data["models"] if not os.path.exists(os.path.join(folder, os.path.basename(m["glb"])))]
 if missing:
     print("WARNING: listed in index.json but no file:", ", ".join(missing))

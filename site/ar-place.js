@@ -1,6 +1,10 @@
 // Tap-to-place AR (WebXR, Android Chrome). The camera opens, a ring follows the floor,
 // and the model is put down only where the visitor taps. Tap again to move it.
 // iOS has no WebXR; index.html falls back to AR Quick Look there.
+//
+// Order matters: navigator.xr.requestSession() must be the FIRST await after the tap,
+// because Chrome only honours it inside the user-activation window (~5 s). Loading the
+// model first over a slow connection silently lost the session and the object never showed.
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
@@ -9,7 +13,7 @@ export async function supported() {
   try { return await navigator.xr.isSessionSupported('immersive-ar'); } catch (e) { return false; }
 }
 
-// Loads a GLB without XR; used by the desktop self-test (?selftest=1) to prove the loader path.
+// Loads a GLB without XR; also used by the desktop self-test (?selftest=1).
 export function loadModel(url) {
   return new Promise((resolve, reject) => new GLTFLoader().load(url, g => resolve(g.scene), undefined, reject));
 }
@@ -28,94 +32,112 @@ function contactShadow(radius) {
 }
 
 /**
- * start({ glb, overlay, hint, scaleBtn, exitBtn, text, onEnd })
- *   overlay  - DOM element shown over the camera (dom-overlay), holds hint + buttons
- *   text     - { find, place, move, scale } strings in the current language
+ * start({ glb, overlay, hint, scaleBtn, exitBtn, text, debug, onEnd })
+ *   overlay - DOM element shown over the camera (dom-overlay), holds hint + buttons
+ *   text    - { find, place, move, scale, loading, failed } in the current language
+ *   debug   - element that receives a one-line status readout (optional)
+ * Returns the XRSession. Throws if the session cannot be started (caller falls back).
  */
-export async function start(opts) {
-  const { glb, overlay, hint, scaleBtn, exitBtn, text, onEnd } = opts;
-  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.xr.enabled = true;
-  renderer.domElement.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;z-index:2000';
-  document.body.appendChild(renderer.domElement);
+export function start(opts) {
+  const { glb, overlay, hint, scaleBtn, exitBtn, text, debug, onEnd } = opts;
+  const dbg = (s) => { if (debug) debug.textContent = s; };
 
-  const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 60);
-  scene.add(new THREE.HemisphereLight(0xffffff, 0x8a7a66, 1.6));
-  const sun = new THREE.DirectionalLight(0xffffff, 1.4); sun.position.set(2, 6, 3); scene.add(sun);
+  // --- synchronous setup, then the session request is the first await ---
+  overlay.hidden = false; hint.textContent = text.loading;
+  const sessionPromise = navigator.xr.requestSession('immersive-ar', {
+    requiredFeatures: ['hit-test'],
+    optionalFeatures: ['dom-overlay', 'light-estimation'],
+    domOverlay: { root: overlay }
+  });
+  return sessionPromise.then(session => run(session), err => { overlay.hidden = true; throw err; });
 
-  const reticle = new THREE.Mesh(
-    new THREE.RingGeometry(0.12, 0.16, 48).rotateX(-Math.PI / 2),
-    new THREE.MeshBasicMaterial({ color: 0xff8a3d, transparent: true, opacity: 0.9 }));
-  reticle.matrixAutoUpdate = false; reticle.visible = false; scene.add(reticle);
+  async function run(session) {
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.xr.enabled = true;
+    renderer.domElement.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;z-index:2000';
+    document.body.appendChild(renderer.domElement);
 
-  const model = await loadModel(glb);
-  const box = new THREE.Box3().setFromObject(model);
-  const size = box.getSize(new THREE.Vector3());
-  model.add(contactShadow(Math.max(size.x, size.z) / 2));
-  model.visible = false; scene.add(model);
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 60);
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x8a7a66, 1.6));
+    const sun = new THREE.DirectionalLight(0xffffff, 1.4); sun.position.set(2, 6, 3); scene.add(sun);
 
-  const scales = [1, 0.5, 0.25]; let si = 0;
-  const applyScale = () => { model.scale.setScalar(scales[si]); scaleBtn.textContent = text.scale + ' 1:' + (1 / scales[si]); };
-  applyScale();
-  scaleBtn.onclick = () => { si = (si + 1) % scales.length; applyScale(); };
+    const reticle = new THREE.Mesh(
+      new THREE.RingGeometry(0.12, 0.16, 48).rotateX(-Math.PI / 2),
+      new THREE.MeshBasicMaterial({ color: 0xff8a3d, transparent: true, opacity: 0.9 }));
+    reticle.matrixAutoUpdate = false; reticle.visible = false; scene.add(reticle);
 
-  let session;
-  try {
-    session = await navigator.xr.requestSession('immersive-ar', {
-      requiredFeatures: ['hit-test'],
-      optionalFeatures: ['dom-overlay', 'light-estimation'],
-      domOverlay: { root: overlay }
+    const group = new THREE.Group(); group.visible = false; scene.add(group);
+    let model = null, placed = false, hits = 0, frames = 0;
+    const scales = [1, 0.5, 0.25]; let si = 0;
+    const applyScale = () => { group.scale.setScalar(scales[si]); scaleBtn.textContent = text.scale + ' 1:' + (1 / scales[si]); };
+    applyScale();
+    scaleBtn.onclick = () => { si = (si + 1) % scales.length; applyScale(); };
+
+    // taps on the overlay's buttons must not count as "place here"
+    overlay.addEventListener('beforexrselect', e => { if (e.target.closest && e.target.closest('button')) e.preventDefault(); });
+
+    renderer.xr.setReferenceSpaceType('local');
+    await renderer.xr.setSession(session);
+    const viewerSpace = await session.requestReferenceSpace('viewer');
+    const hitSource = await session.requestHitTestSource({ space: viewerSpace });
+    const features = (session.enabledFeatures || []).join(',');
+
+    // model loads while the camera is already up
+    loadModel(glb).then(m => {
+      model = m;
+      const size = new THREE.Box3().setFromObject(m).getSize(new THREE.Vector3());
+      group.add(m); group.add(contactShadow(Math.max(size.x, size.z) / 2));
+      hint.textContent = reticle.visible ? text.place : text.find;
+    }).catch(e => { hint.textContent = text.failed + ' ' + (e && e.message ? e.message : e); });
+
+    const placeAt = (pos) => {
+      group.position.copy(pos);
+      const cam = renderer.xr.getCamera().position;
+      group.rotation.y = Math.atan2(cam.x - pos.x, cam.z - pos.z); // face the visitor
+      group.visible = true; placed = true; hint.textContent = text.move;
+    };
+    const controller = renderer.xr.getController(0);
+    controller.addEventListener('select', () => {
+      if (!model) { hint.textContent = text.loading; return; }
+      if (reticle.visible) { placeAt(new THREE.Vector3().setFromMatrixPosition(reticle.matrix)); return; }
+      // no floor found yet: put it 2 m ahead, on an estimated floor 1.4 m below the phone
+      const cam = renderer.xr.getCamera();
+      const fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(cam.quaternion); fwd.y = 0; fwd.normalize();
+      placeAt(new THREE.Vector3(cam.position.x + fwd.x * 2, cam.position.y - 1.4, cam.position.z + fwd.z * 2));
     });
-  } catch (e) {
-    renderer.dispose(); renderer.domElement.remove();
-    throw e;
-  }
-  overlay.hidden = false; hint.textContent = text.find;
-  // taps on the overlay's buttons must not count as "place here"
-  overlay.addEventListener('beforexrselect', e => { if (e.target.closest('button')) e.preventDefault(); });
+    scene.add(controller);
 
-  renderer.xr.setReferenceSpaceType('local');
-  await renderer.xr.setSession(session);
-  const viewerSpace = await session.requestReferenceSpace('viewer');
-  const hitSource = await session.requestHitTestSource({ space: viewerSpace });
+    exitBtn.onclick = () => session.end();
+    session.addEventListener('end', () => {
+      renderer.setAnimationLoop(null);
+      renderer.dispose(); renderer.domElement.remove();
+      overlay.hidden = true;
+      if (onEnd) onEnd();
+    });
 
-  let placed = false;
-  const controller = renderer.xr.getController(0);
-  controller.addEventListener('select', () => {
-    if (!reticle.visible) return;
-    model.position.setFromMatrixPosition(reticle.matrix);
-    const cam = renderer.xr.getCamera().position;
-    model.rotation.y = Math.atan2(cam.x - model.position.x, cam.z - model.position.z); // face the visitor
-    model.visible = true; placed = true; hint.textContent = text.move;
-  });
-  scene.add(controller);
-
-  exitBtn.onclick = () => session.end();
-  session.addEventListener('end', () => {
-    renderer.setAnimationLoop(null);
-    renderer.dispose(); renderer.domElement.remove();
-    overlay.hidden = true;
-    if (onEnd) onEnd();
-  });
-
-  renderer.setAnimationLoop((t, frame) => {
-    if (frame) {
-      const ref = renderer.xr.getReferenceSpace();
-      const hits = frame.getHitTestResults(hitSource);
-      if (hits.length) {
-        const pose = hits[0].getPose(ref);
-        reticle.visible = true;
-        reticle.matrix.fromArray(pose.transform.matrix);
-        if (!placed) hint.textContent = text.place;
-      } else {
-        reticle.visible = false;
-        if (!placed) hint.textContent = text.find;
+    renderer.setAnimationLoop((t, frame) => {
+      if (frame) {
+        frames++;
+        const ref = renderer.xr.getReferenceSpace();
+        const results = frame.getHitTestResults(hitSource);
+        if (results.length) {
+          hits++;
+          const pose = results[0].getPose(ref);
+          reticle.visible = true;
+          reticle.matrix.fromArray(pose.transform.matrix);
+          if (!placed && model) hint.textContent = text.place;
+        } else {
+          reticle.visible = false;
+          if (!placed && model) hint.textContent = text.find;
+        }
+        if (debug && frames % 15 === 0) dbg('xr ok · ' + features + ' · frames ' + frames + ' · hits ' + hits +
+          ' · model ' + (model ? 'loaded' : 'loading') + ' · placed ' + placed + ' · scale 1:' + (1 / scales[si]));
       }
-    }
-    renderer.render(scene, camera);
-  });
-  return session;
+      renderer.render(scene, camera);
+    });
+    return session;
+  }
 }

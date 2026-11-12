@@ -59,6 +59,7 @@
   #xrOverlay[hidden]{display:none}
   #xrOverlay{position:fixed;inset:0;z-index:2001;pointer-events:none;display:flex;flex-direction:column;justify-content:space-between;padding:max(16px,env(safe-area-inset-top)) 16px max(20px,env(safe-area-inset-bottom))}
   #xrHint{align-self:center;background:rgba(15,18,22,.78);color:#fff;font-size:15px;padding:10px 16px;border-radius:999px;max-width:90%;text-align:center}
+  #xrDebug{align-self:center;margin-top:8px;background:rgba(0,0,0,.6);color:#9f9;font:11px/1.4 monospace;padding:4px 8px;border-radius:6px;max-width:95%;word-break:break-all}
   .xr-bar{display:flex;justify-content:space-between;gap:10px}
   .xr-btn{pointer-events:auto;background:rgba(15,18,22,.82);color:#fff;border:1px solid rgba(255,255,255,.25);padding:12px 18px;font-size:15px;border-radius:999px}
   .xr-exit{background:var(--accent);color:#1a1200;font-weight:700;border:0}
@@ -117,6 +118,7 @@
 
   <div id="xrOverlay" hidden>
     <div id="xrHint"></div>
+    <div id="xrDebug" class="hidden"></div>
     <div class="xr-bar">
       <button id="xrScale" class="xr-btn"></button>
       <button id="xrExit" class="xr-btn xr-exit" data-zh="離開" data-en="Exit">離開</button>
@@ -190,21 +192,26 @@
   mv.addEventListener('ar-status', function(e){
     if (e.detail.status === 'failed') document.getElementById('noAr').classList.remove('hidden');
   });
-  var xr = null, xrOk = false;
+  var xr = null, xrOk = false, debugOn = new URLSearchParams(location.search).get('debug') === '1';
   import('./ar-place.js').then(function(m){ xr = m; return m.supported(); }).then(function(ok){ xrOk = !!ok; }).catch(function(){ xrOk = false; });
   function xrText(){
     return lang === 'zh'
-      ? { find: '慢慢移動手機，對著地板…', place: '點一下橘色圓圈，把它放下', move: '已放下。再點一下可移動', scale: '比例' }
-      : { find: 'Move the phone slowly over the floor…', place: 'Tap the orange ring to put it down', move: 'Placed. Tap again to move it', scale: 'Scale' };
+      ? { find: '慢慢移動手機，對著地板…（找不到地板時點一下也會放在前方）', place: '點一下橘色圓圈，把它放下', move: '已放下。再點一下可移動', scale: '比例', loading: '相機已開，模型載入中…', failed: '模型載入失敗：' }
+      : { find: 'Move the phone slowly over the floor… (a tap still places it ahead if no floor is found)', place: 'Tap the orange ring to put it down', move: 'Placed. Tap again to move it', scale: 'Scale', loading: 'Camera on, loading the model…', failed: 'Model failed to load:' };
   }
   document.getElementById('arBtn').addEventListener('click', function(){
     if (!current) return;
     if (xrOk && xr) {
       var ov = document.getElementById('xrOverlay');
+      var dbgEl = document.getElementById('xrDebug'); dbgEl.classList.toggle('hidden', !debugOn);
       xr.start({ glb: current.glb, overlay: ov, hint: document.getElementById('xrHint'),
                  scaleBtn: document.getElementById('xrScale'), exitBtn: document.getElementById('xrExit'),
-                 text: xrText(), onEnd: function(){} })
-        .catch(function(err){ console.warn('WebXR failed, falling back', err); mv.activateAR(); });
+                 text: xrText(), debug: debugOn ? dbgEl : null, onEnd: function(){} })
+        .catch(function(err){
+          console.warn('WebXR failed, falling back', err);
+          if (debugOn) alert('WebXR session failed: ' + (err && err.message ? err.message : err) + ' — falling back to Scene Viewer');
+          mv.activateAR();
+        });
     } else if (mv.canActivateAR) {
       mv.activateAR();            // iPhone: AR Quick Look (Apple places it, tap to move)
     } else {

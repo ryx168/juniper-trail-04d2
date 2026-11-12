@@ -22,7 +22,8 @@
           "en": "Vancouver one-day tour (7554)"
         }
       },
-      "credit": "Stylised model built in Blender 4.5 on GitHub Actions - not a scan"
+      "credit": "Stylised model built in Blender 4.5 on GitHub Actions - not a scan",
+      "usdz": "models/totem-stanley-park.usdz"
     },
     {
       "id": "statue-demo",

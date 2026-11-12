@@ -52,6 +52,13 @@ jobs:
             ~/blender/blender -b --python scripts/convert_scan.py -- "$f" "site/models/$id.glb" $extra 2>&1 | grep -E "model height|decimated|WROTE|Error|Traceback"
           done
 
+      - name: USDZ for iOS Quick Look (one per GLB)
+        run: |
+          shopt -s nullglob
+          for g in site/models/*.glb; do
+            ~/blender/blender -b --python scripts/glb_to_usdz.py -- "$g" "${g%.glb}.usdz" 2>&1 | grep -E "WROTE|Error|Traceback" || true
+          done
+
       - name: register new models in index.json
         run: python3 scripts/register.py site/models
 
