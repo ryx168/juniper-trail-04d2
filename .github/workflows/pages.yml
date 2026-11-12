@@ -31,10 +31,14 @@ jobs:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/blender
 
-      - name: build the demo statue
-        env:
-          OUT_GLB: ${{ github.workspace }}/site/models/statue-demo.glb
-        run: ~/blender/blender -b --python scripts/make_statue.py 2>&1 | grep -E "WROTE|Error|Traceback" || true
+      - name: build the procedural models (scripts/make_*.py)
+        run: |
+          mkdir -p site/models
+          for s in scripts/make_*.py; do
+            id=$(basename "${s%.py}"); id=${id#make_}
+            echo "== $s -> site/models/$id.glb"
+            OUT_GLB="$PWD/site/models/$id.glb" ~/blender/blender -b --python "$s" 2>&1 | grep -E "WROTE|Error|Traceback" || true
+          done
 
       - name: convert scans/ into site/models/
         env:

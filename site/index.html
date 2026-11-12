@@ -89,6 +89,7 @@
       <div class="card">
         <h2 id="mTitle"></h2>
         <p id="mCaption"></p>
+        <p id="mTour" class="hidden"><a id="mTourLink" href="#" target="_blank" rel="noopener"></a></p>
         <p class="credit" id="mCredit"></p>
       </div>
       <div class="card only-desktop">
@@ -132,6 +133,8 @@
     document.getElementById('mTitle').textContent = t(m.title);
     document.getElementById('mCaption').textContent = t(m.caption);
     document.getElementById('mCredit').textContent = m.credit || '';
+    var tp = document.getElementById('mTour'), ta = document.getElementById('mTourLink');
+    if (m.tour && m.tour.url) { ta.href = m.tour.url; ta.textContent = (lang === 'zh' ? '這個景點在行程：' : 'On the tour: ') + t(m.tour.label); tp.classList.remove('hidden'); } else { tp.classList.add('hidden'); }
     document.title = t(m.title) + ' · AR · XO Tours';
   }
   function load(m, push){

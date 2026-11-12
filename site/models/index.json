@@ -2,12 +2,38 @@
   "_comment": "Models shown by /ar.html. Each entry: id (URL ?m=), glb (required, metres, Y-up), usdz (optional - iOS Quick Look uses it directly, otherwise model-viewer converts the GLB on the fly), placement floor|wall, scale fixed (life-size) | auto. See the repo README for the scan-to-web pipeline.",
   "models": [
     {
+      "id": "totem-stanley-park",
+      "glb": "models/totem-stanley-park.glb",
+      "placement": "floor",
+      "scale": "fixed",
+      "height_m": 5.6,
+      "title": {
+        "zh": "史丹利公園圖騰柱",
+        "en": "Stanley Park totem pole"
+      },
+      "caption": {
+        "zh": "溫哥華史丹利公園布羅克頓角的圖騰柱，是加拿大最多人參觀的景點之一。這是 5.6 公尺高的示意模型：熊、人像、渡鴉與雷鳥四層疊起。真正的掃描完成後會換成實物。",
+        "en": "The totem poles at Brockton Point in Vancouver's Stanley Park are among the most visited sights in Canada. This is a 5.6 m stylised stand-in with four stacked figures: bear, human, raven and thunderbird. It will be replaced by a real scan."
+      },
+      "tour": {
+        "url": "https://xotours.ai/7554/%E6%BA%AB%E5%93%A5%E8%8F%AF%E4%B8%80%E5%A4%A9%E9%81%8A%20~%E7%B6%AD%E5%A4%9A%E8%8E%89%E4%BA%9E%2C%E6%83%A0%E6%96%AF%E5%8B%92%20City%20Tour",
+        "label": {
+          "zh": "溫哥華一天遊（7554）",
+          "en": "Vancouver one-day tour (7554)"
+        }
+      },
+      "credit": "Stylised model built in Blender 4.5 on GitHub Actions - not a scan"
+    },
+    {
       "id": "statue-demo",
       "glb": "models/statue-demo.glb",
       "placement": "floor",
       "scale": "fixed",
       "height_m": 2.4,
-      "title": { "zh": "花園雕像（示範）", "en": "Garden statue (demo)" },
+      "title": {
+        "zh": "花園雕像（示範）",
+        "en": "Garden statue (demo)"
+      },
       "caption": {
         "zh": "示範模型：一座 2.4 公尺高的石灰岩基座與大理石半身像。真正的景點掃描完成後，只要把掃描檔放進 scans/，GitHub Actions 會自動轉檔並登記，就會在這裡出現。",
         "en": "Demo model: a 2.4 m limestone pedestal with a marble bust. Once a real landmark is scanned, drop the scan into scans/ and register it in index.json and it appears here."

@@ -13,8 +13,10 @@ Everything heavy runs on GitHub Actions. The PC only pushes files.
   code of its own URL so the visitor opens it on a phone. `?m=<id>` picks a model.
 - `scans/` — drop iPhone scans here (`.usdz` from Reality Composer / Object Capture,
   or `.glb` / `.obj` from Polycam, Scaniverse, KIRI Engine). Commit and push.
-- `.github/workflows/pages.yml` — on every push, Blender 4.5 on the runner builds the
-  demo statue, converts every scan into a floor-centred, Y-up, JPEG-textured GLB in
+- `scripts/make_*.py` — procedural stand-ins built by Blender on every run; the file
+  name after `make_` is the model id (`make_totem-stanley-park.py` → `models/totem-stanley-park.glb`).
+- `.github/workflows/pages.yml` — on every push, Blender 4.5 on the runner runs every
+  `make_*.py`, converts every scan into a floor-centred, Y-up, JPEG-textured GLB in
   `site/models/`, registers new ones in `site/models/index.json`, and publishes
   `site/` to GitHub Pages.
 - `site/models/index.json` — titles, captions, placement (`floor` or `wall`) and
