@@ -8,8 +8,11 @@ Everything heavy runs on GitHub Actions. The PC only pushes files.
 
 ## How it works
 
-- `site/index.html` — the viewer. On a phone it offers **View in your space**
-  (iOS: AR Quick Look, Android: Scene Viewer / WebXR). On a desktop it shows a QR
+- `site/index.html` — the viewer. On a phone it offers **View in your space**. On Android
+  Chrome that opens the camera with tap-to-place (`site/ar-place.js`, WebXR hit-test: an
+  orange ring follows the floor, the model is put down where you tap, tap again to move,
+  a Scale button cycles 1:1 / 1:2 / 1:4). On iPhone it opens AR Quick Look, where Apple
+  places the model and a tap moves it. On a desktop it shows a QR
   code of its own URL so the visitor opens it on a phone. `?m=<id>` picks a model.
 - `scans/` — drop iPhone scans here (`.usdz` from Reality Composer / Object Capture,
   or `.glb` / `.obj` from Polycam, Scaniverse, KIRI Engine). Commit and push.

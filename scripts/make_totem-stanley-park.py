@@ -92,6 +92,8 @@ bpy.ops.object.select_all(action='DESELECT')
 for o in objs: o.select_set(True)
 bpy.context.view_layer.objects.active = objs[1]
 bpy.ops.object.join(); pole = bpy.context.object; pole.name = "totem_stanley_park"
+# faces were modelled on +Y; glTF's front is +Z, which is Blender -Y, so turn the pole round
+import math as _m; pole.rotation_euler[2] = _m.radians(180); bpy.ops.object.transform_apply(rotation=True)
 bpy.ops.object.mode_set(mode='EDIT'); bpy.ops.mesh.select_all(action='SELECT')
 bpy.ops.uv.smart_project(angle_limit=math.radians(66), island_margin=0.01)
 bpy.ops.object.mode_set(mode='OBJECT')
@@ -118,8 +120,8 @@ pv = os.environ.get("PREVIEW_PNG")
 if pv:
     sc.render.engine = 'BLENDER_EEVEE_NEXT' if hasattr(bpy.types, "SceneEEVEE") else 'BLENDER_EEVEE'
     sc.render.resolution_x, sc.render.resolution_y = 480, 800; sc.render.filepath = pv
-    bpy.ops.object.light_add(type="SUN", location=(4, 6, 10)); bpy.context.object.data.energy = 3
-    bpy.ops.object.camera_add(location=(4.5, 7.5, 3.2), rotation=(math.radians(82), 0, math.radians(149)))
+    bpy.ops.object.light_add(type="SUN", location=(4, -6, 10)); bpy.context.object.data.energy = 3
+    bpy.ops.object.camera_add(location=(4.5, -7.5, 3.2), rotation=(math.radians(82), 0, math.radians(31)))
     sc.camera = bpy.context.object; sc.camera.data.lens = 35
     w = bpy.data.worlds.new("w"); sc.world = w; w.use_nodes = True; w.node_tree.nodes["Background"].inputs[0].default_value = (0.6, 0.7, 0.85, 1)
     bpy.ops.render.render(write_still=True); print("PREVIEW", pv)
