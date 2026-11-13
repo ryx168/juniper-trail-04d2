@@ -25,6 +25,18 @@ Everything heavy runs on GitHub Actions. The PC only pushes files.
 - `site/models/index.json` — titles, captions, placement (`floor` or `wall`) and
   scale (`fixed` = life-size) per model. Edit after the first run to name a new scan.
 
+## If the camera shows nothing
+
+Open `https://ar.xotours.ai/?debug=1`. A black box under the title lists the device, whether
+WebXR AR / Quick Look are available and which path the button will take. In the camera view a
+green line shows session features, frames, floor hits, taps, model state and placement. Any
+error is printed there instead of failing silently. A tap always puts down an orange wireframe
+box at the spot, replaced by the model once it has loaded, so "box but no model" means the GLB
+did not load and "no box" means the tap never reached the session.
+
+iPhone uses model-viewer's in-browser USDZ conversion by default; add `&native=1` to use the
+Blender-exported `.usdz` instead.
+
 ## Scanning
 
 Apple *Reality Composer* (free) → Object Capture → walk slowly around the object, keep

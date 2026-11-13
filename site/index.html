@@ -59,6 +59,7 @@
   #xrOverlay[hidden]{display:none}
   #xrOverlay{position:fixed;inset:0;z-index:2001;pointer-events:none;display:flex;flex-direction:column;justify-content:space-between;padding:max(16px,env(safe-area-inset-top)) 16px max(20px,env(safe-area-inset-bottom))}
   #xrHint{align-self:center;background:rgba(15,18,22,.78);color:#fff;font-size:15px;padding:10px 16px;border-radius:999px;max-width:90%;text-align:center}
+  #pageDebug{background:#000;color:#9f9;font:11px/1.4 monospace;padding:8px 10px;border-radius:8px;white-space:pre-wrap;word-break:break-all;margin:0 0 12px}
   #xrDebug{align-self:center;margin-top:8px;background:rgba(0,0,0,.6);color:#9f9;font:11px/1.4 monospace;padding:4px 8px;border-radius:6px;max-width:95%;word-break:break-all}
   .xr-bar{display:flex;justify-content:space-between;gap:10px}
   .xr-btn{pointer-events:auto;background:rgba(15,18,22,.82);color:#fff;border:1px solid rgba(255,255,255,.25);padding:12px 18px;font-size:15px;border-radius:999px}
@@ -75,6 +76,7 @@
     <span class="lang"><button data-lang="zh" class="on">中文</button> <button data-lang="en">EN</button></span>
   </div>
   <h1 data-zh="把景點放到你眼前" data-en="Put the landmark in front of you">把景點放到你眼前</h1>
+  <pre id="pageDebug" class="hidden"></pre>
   <p class="lead" data-zh="真實景點的 3D 掃描，用手機就能以實際大小放進你的客廳、辦公室或花園，不用安裝任何 App。" data-en="A 3D scan of a real landmark, placed life-size in your living room, office or garden straight from your phone. No app to install.">真實景點的 3D 掃描，用手機就能以實際大小放進你的客廳、辦公室或花園，不用安裝任何 App。</p>
 
   <div class="stage">
@@ -158,13 +160,13 @@
   function load(m, push){
     current = m;
     mv.setAttribute('src', m.glb);
-    if (m.usdz) mv.setAttribute('ios-src', m.usdz); else mv.removeAttribute('ios-src');
+    if (m.usdz && new URLSearchParams(location.search).get('native') === '1') mv.setAttribute('ios-src', m.usdz); else mv.removeAttribute('ios-src');
     mv.setAttribute('ar-placement', m.placement || 'floor');
     mv.setAttribute('ar-scale', m.scale || 'fixed');
     mv.setAttribute('alt', t(m.title));
     describe(m);
     if (push) history.replaceState(null, '', '?m=' + encodeURIComponent(m.id));
-    drawQR(); renderGallery();
+    drawQR(); renderGallery(); pageInfo();
   }
   function renderGallery(){
     var g = document.getElementById('gallery'); g.innerHTML = '';
@@ -193,14 +195,25 @@
     if (e.detail.status === 'failed') document.getElementById('noAr').classList.remove('hidden');
   });
   var xr = null, xrOk = false, debugOn = new URLSearchParams(location.search).get('debug') === '1';
-  import('./ar-place.js').then(function(m){ xr = m; return m.supported(); }).then(function(ok){ xrOk = !!ok; }).catch(function(){ xrOk = false; });
+  var pageDbg = document.getElementById('pageDebug');
+  function pageInfo(extra){
+    if (!debugOn) return;
+    pageDbg.classList.remove('hidden');
+    pageDbg.textContent = 'ua: ' + navigator.userAgent + '\n' + 'phone layout: ' + isPhone + ' · navigator.xr: ' + !!navigator.xr +
+      ' · webxr AR: ' + xrOk + ' · quick look/scene viewer: ' + (mv.canActivateAR ? 'yes' : 'no') +
+      ' · ios-src: ' + (mv.getAttribute('ios-src') || 'none') + ' · model: ' + (current ? current.glb : '-') + (extra ? '\n' + extra : '');
+  }
+  window.addEventListener('unhandledrejection', function(e){ pageInfo('unhandled: ' + (e.reason && e.reason.message ? e.reason.message : e.reason)); });
+  window.addEventListener('error', function(e){ pageInfo('error: ' + e.message); });
+  import('./ar-place.js').then(function(m){ xr = m; return m.supported(); }).then(function(ok){ xrOk = !!ok; pageInfo(); }).catch(function(e){ xrOk = false; pageInfo('ar-place.js failed: ' + e); });
   function xrText(){
     return lang === 'zh'
-      ? { find: '慢慢移動手機，對著地板…（找不到地板時點一下也會放在前方）', place: '點一下橘色圓圈，把它放下', move: '已放下。再點一下可移動', scale: '比例', loading: '相機已開，模型載入中…', failed: '模型載入失敗：' }
-      : { find: 'Move the phone slowly over the floor… (a tap still places it ahead if no floor is found)', place: 'Tap the orange ring to put it down', move: 'Placed. Tap again to move it', scale: 'Scale', loading: 'Camera on, loading the model…', failed: 'Model failed to load:' };
+      ? { find: '慢慢移動手機，對著地板…（找不到地板時點一下也會放在前方）', place: '點一下橘色圓圈，把它放下', move: '已放下。再點一下可移動', scale: '比例', loading: '相機已開，模型載入中…', failed: 'AR 發生錯誤：', markerNote: '先放一個橘色方框，模型載好會換上' }
+      : { find: 'Move the phone slowly over the floor… (a tap still places it ahead if no floor is found)', place: 'Tap the orange ring to put it down', move: 'Placed. Tap again to move it', scale: 'Scale', loading: 'Camera on, loading the model…', failed: 'AR error:', markerNote: 'an orange box marks the spot until the model arrives' };
   }
   document.getElementById('arBtn').addEventListener('click', function(){
     if (!current) return;
+    pageInfo('AR button tapped: ' + (xrOk && xr ? 'WebXR tap-to-place' : (mv.canActivateAR ? 'Quick Look / Scene Viewer' : 'nothing available')));
     if (xrOk && xr) {
       var ov = document.getElementById('xrOverlay');
       var dbgEl = document.getElementById('xrDebug'); dbgEl.classList.toggle('hidden', !debugOn);
@@ -220,6 +233,7 @@
   });
   mv.addEventListener('load', function(){
     if (isPhone && !mv.canActivateAR && !xrOk) document.getElementById('noAr').classList.remove('hidden');
+    pageInfo();
   });
   if (new URLSearchParams(location.search).get('selftest') === '1') {
     import('./ar-place.js').then(function(m){ return m.loadModel(current ? current.glb : 'models/statue-demo.glb'); })

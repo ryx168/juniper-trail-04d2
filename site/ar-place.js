@@ -52,6 +52,9 @@ export function start(opts) {
   return sessionPromise.then(session => run(session), err => { overlay.hidden = true; throw err; });
 
   async function run(session) {
+    const features = (session.enabledFeatures || []).join(',') || '(enabledFeatures n/a)';
+    dbg('session ok · ' + features + ' · setting up…');
+    window.__xrSession = session;
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -70,6 +73,9 @@ export function start(opts) {
     reticle.matrixAutoUpdate = false; reticle.visible = false; scene.add(reticle);
 
     const group = new THREE.Group(); group.visible = false; scene.add(group);
+    const marker = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 0.4),
+      new THREE.MeshBasicMaterial({ color: 0xff8a3d, wireframe: true }));
+    marker.position.y = 0.2; group.add(marker);
     let model = null, placed = false, hits = 0, frames = 0;
     const scales = [1, 0.5, 0.25]; let si = 0;
     const applyScale = () => { group.scale.setScalar(scales[si]); scaleBtn.textContent = text.scale + ' 1:' + (1 / scales[si]); };
@@ -80,35 +86,45 @@ export function start(opts) {
     overlay.addEventListener('beforexrselect', e => { if (e.target.closest && e.target.closest('button')) e.preventDefault(); });
 
     renderer.xr.setReferenceSpaceType('local');
-    await renderer.xr.setSession(session);
-    const viewerSpace = await session.requestReferenceSpace('viewer');
-    const hitSource = await session.requestHitTestSource({ space: viewerSpace });
-    const features = (session.enabledFeatures || []).join(',');
+    let hitSource = null, setupError = '';
+    try {
+      await renderer.xr.setSession(session);
+      dbg('session ok · renderer bound · hit-test…');
+      const viewerSpace = await session.requestReferenceSpace('viewer');
+      hitSource = await session.requestHitTestSource({ space: viewerSpace });
+    } catch (e) {
+      setupError = (e && e.message) ? e.message : String(e);
+      hint.textContent = text.failed + ' ' + setupError;
+      dbg('setup error: ' + setupError);
+    }
 
     // model loads while the camera is already up
     loadModel(glb).then(m => {
-      model = m;
+      model = m; group.remove(marker);
       const size = new THREE.Box3().setFromObject(m).getSize(new THREE.Vector3());
       group.add(m); group.add(contactShadow(Math.max(size.x, size.z) / 2));
+      dbg('model loaded · ' + size.x.toFixed(2) + 'x' + size.y.toFixed(2) + 'x' + size.z.toFixed(2) + ' m');
       hint.textContent = reticle.visible ? text.place : text.find;
     }).catch(e => { hint.textContent = text.failed + ' ' + (e && e.message ? e.message : e); });
 
     const placeAt = (pos) => {
       group.position.copy(pos);
-      const cam = renderer.xr.getCamera().position;
+      const cam = camera.position;
       group.rotation.y = Math.atan2(cam.x - pos.x, cam.z - pos.z); // face the visitor
       group.visible = true; placed = true; hint.textContent = text.move;
     };
-    const controller = renderer.xr.getController(0);
-    controller.addEventListener('select', () => {
-      if (!model) { hint.textContent = text.loading; return; }
-      if (reticle.visible) { placeAt(new THREE.Vector3().setFromMatrixPosition(reticle.matrix)); return; }
-      // no floor found yet: put it 2 m ahead, on an estimated floor 1.4 m below the phone
-      const cam = renderer.xr.getCamera();
-      const fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(cam.quaternion); fwd.y = 0; fwd.normalize();
-      placeAt(new THREE.Vector3(cam.position.x + fwd.x * 2, cam.position.y - 1.4, cam.position.z + fwd.z * 2));
+    let taps = 0;
+    session.addEventListener('select', () => {
+      taps++;
+      if (reticle.visible) { placeAt(new THREE.Vector3().setFromMatrixPosition(reticle.matrix)); }
+      else {
+        // no floor found yet: put it 2 m ahead, on an estimated floor 1.4 m below the phone
+        const fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion); fwd.y = 0;
+        if (fwd.lengthSq() < 1e-6) fwd.set(0, 0, -1); fwd.normalize();
+        placeAt(new THREE.Vector3(camera.position.x + fwd.x * 2, camera.position.y - 1.4, camera.position.z + fwd.z * 2));
+      }
+      if (!model) hint.textContent = text.loading + ' (' + text.markerNote + ')';
     });
-    scene.add(controller);
 
     exitBtn.onclick = () => session.end();
     session.addEventListener('end', () => {
@@ -122,7 +138,7 @@ export function start(opts) {
       if (frame) {
         frames++;
         const ref = renderer.xr.getReferenceSpace();
-        const results = frame.getHitTestResults(hitSource);
+        const results = hitSource ? frame.getHitTestResults(hitSource) : [];
         if (results.length) {
           hits++;
           const pose = results[0].getPose(ref);
@@ -133,8 +149,10 @@ export function start(opts) {
           reticle.visible = false;
           if (!placed && model) hint.textContent = text.find;
         }
-        if (debug && frames % 15 === 0) dbg('xr ok · ' + features + ' · frames ' + frames + ' · hits ' + hits +
-          ' · model ' + (model ? 'loaded' : 'loading') + ' · placed ' + placed + ' · scale 1:' + (1 / scales[si]));
+        if (debug && frames % 15 === 0) dbg('xr ok · ' + features + (setupError ? ' · SETUP ERROR ' + setupError : '') +
+          ' · frames ' + frames + ' · hits ' + hits + ' · taps ' + taps + ' · model ' + (model ? 'loaded' : 'loading') +
+          ' · placed ' + placed + ' · scale 1:' + (1 / scales[si]) + ' · cam ' + camera.position.x.toFixed(1) + ',' +
+          camera.position.y.toFixed(1) + ',' + camera.position.z.toFixed(1));
       }
       renderer.render(scene, camera);
     });
