@@ -1,7 +1,7 @@
 # AR landmarks
 
-Scan a real statue on an iPhone, and anyone who scans a QR code can place the
-life-size 3D copy in front of them in augmented reality, with no app to install.
+Scan a real statue with a phone (iPhone or Android), and anyone who scans a QR code can
+place the life-size 3D copy in front of them in augmented reality, with no app to install.
 Same idea as the AR Code demo at https://x.com/FinanceYF5/status/1700670444817555580.
 
 Everything heavy runs on GitHub Actions. The PC only pushes files.
@@ -14,8 +14,9 @@ Everything heavy runs on GitHub Actions. The PC only pushes files.
   a Scale button cycles 1:1 / 1:2 / 1:4). On iPhone it opens AR Quick Look, where Apple
   places the model and a tap moves it. On a desktop it shows a QR
   code of its own URL so the visitor opens it on a phone. `?m=<id>` picks a model.
-- `scans/` — drop iPhone scans here (`.usdz` from Reality Composer / Object Capture,
-  or `.glb` / `.obj` from Polycam, Scaniverse, KIRI Engine). Commit and push.
+- `scans/` — drop phone scans here: `.usdz` from Reality Composer / Object Capture on an
+  iPhone, or the `.zip` / `.glb` / `.obj` an Android app exports (see *Scanning*). A scan can
+  be a loose file, a folder, or a zip; `scripts/convert_scans.sh` sorts it out. Commit and push.
 - `scripts/make_*.py` — procedural stand-ins built by Blender on every run; the file
   name after `make_` is the model id (`make_totem-stanley-park.py` → `models/totem-stanley-park.glb`).
 - `.github/workflows/pages.yml` — on every push, Blender 4.5 on the runner runs every
@@ -39,10 +40,28 @@ Blender-exported `.usdz` instead.
 
 ## Scanning
 
-Apple *Reality Composer* (free) → Object Capture → walk slowly around the object, keep
-it inside the box, let it process on the phone, export `.usdz`. iPhone 12 Pro or newer
-works; LiDAR helps with scale. Keep scans under ~10 MB for phones — re-run the workflow
-with a *decimate* ratio (0.3–0.5) from the Actions tab if a scan is too heavy.
+**iPhone.** Apple *Reality Composer* (free) → Object Capture → walk slowly around the object,
+keep it inside the box, let it process on the phone, export `.usdz`. iPhone 12 Pro or newer
+works; LiDAR helps with scale.
+
+**Android (Samsung Galaxy etc.).** Samsung has no built-in equivalent of Object Capture and
+no LiDAR, so the scan is photos only, reconstructed in the cloud by a free app. Any of these
+gives the same kind of result:
+
+| App | Export that works here | Notes |
+|---|---|---|
+| KIRI Engine (free tier) | *Export → OBJ* gives a `.zip` (obj + mtl + jpg); or GLB | Best on plain or shiny objects, has object masking |
+| RealityScan (Epic, free) | `.glb` (via Sketchfab download) | Simplest capture flow |
+| Polycam | `.glb` or `.obj` zip (export may need the paid tier) | Object mode only on Android |
+| Scaniverse (free) | `.glb` | Processes on the phone |
+
+Take 60–150 photos in a slow walk around the object, two heights, even light, no motion blur,
+and keep the whole object in frame. Drop the export straight into `scans/` — the zip does not
+need unpacking — and push. The run prints the model height in metres; if it is wrong the app
+exported without real-world scale, so set `height_m` in `index.json` by hand.
+
+Keep scans under ~10 MB for phones — re-run the workflow with a *decimate* ratio (0.3–0.5)
+from the Actions tab if a scan is too heavy.
 
 ## Libraries
 

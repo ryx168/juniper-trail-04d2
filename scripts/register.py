@@ -24,7 +24,7 @@ for name in sorted(os.listdir(folder)):
         "scale": "fixed",
         "title": {"zh": pretty, "en": pretty},
         "caption": {"zh": "掃描自真實景點。", "en": "Scanned from the real landmark."},
-        "credit": "iPhone Object Capture scan"
+        "credit": "Phone 3D scan"
     })
     known.add(mid); added += 1
     print("registered", mid)

@@ -1,7 +1,8 @@
 name: build-and-publish
 
 # Every push: Blender (headless, on the runner) builds the demo statue, converts any
-# scan dropped into scans/ (.usdz / .usd / .obj / .glb) into a web-ready GLB under
+# scan dropped into scans/ (.usdz / .obj / .glb / .fbx / .ply / .stl, a folder, or the .zip an
+# Android app exports) into a web-ready GLB under
 # site/models/, registers new ones in site/models/index.json, and the site/ folder is
 # published to GitHub Pages. Nothing is rendered or converted on a PC.
 
@@ -43,14 +44,7 @@ jobs:
       - name: convert scans/ into site/models/
         env:
           DECIMATE: ${{ inputs.decimate }}
-        run: |
-          shopt -s nullglob nocaseglob
-          for f in scans/*.usdz scans/*.usd scans/*.usdc scans/*.usda scans/*.obj scans/*.glb scans/*.gltf; do
-            id=$(basename "${f%.*}" | tr -c 'A-Za-z0-9_-\n' '-' | tr 'A-Z' 'a-z')
-            echo "== $f -> site/models/$id.glb"
-            extra=""; [ -n "$DECIMATE" ] && extra="--decimate $DECIMATE"
-            ~/blender/blender -b --python scripts/convert_scan.py -- "$f" "site/models/$id.glb" $extra 2>&1 | grep -E "model height|decimated|WROTE|Error|Traceback"
-          done
+        run: bash scripts/convert_scans.sh
 
       - name: USDZ for iOS Quick Look (one per GLB)
         run: |

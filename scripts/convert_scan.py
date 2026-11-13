@@ -1,7 +1,9 @@
-"""Convert an iPhone Object Capture .usdz (or any .usd/.obj/.glb) to a web-ready .glb.
+"""Convert a phone scan (.usdz from iPhone Object Capture; .obj/.glb/.fbx/.ply/.stl from the
+Android apps - KIRI Engine, Polycam, RealityScan, Scaniverse) to a web-ready .glb.
 
 Run headless with Blender 4.5:
-  blender -b --python tour/ar-models/usdz_to_glb.py -- <input> <output.glb> [--decimate 0.5]
+  blender -b --python scripts/convert_scan.py -- <input> <output.glb> [--decimate 0.5]
+(the workflow calls it through scripts/convert_scans.sh, which also unpacks .zip exports)
 
 What it does: imports the file, joins everything into one mesh, puts the origin on the
 floor at the centre of the footprint, optionally decimates, exports a Y-up GLB with
@@ -22,7 +24,13 @@ if ext in (".usdz", ".usd", ".usda", ".usdc"):
 elif ext in (".glb", ".gltf"):
     bpy.ops.import_scene.gltf(filepath=src)
 elif ext == ".obj":
-    bpy.ops.wm.obj_import(filepath=src)
+    bpy.ops.wm.obj_import(filepath=src)      # picks up the .mtl + textures next to it
+elif ext == ".fbx":
+    bpy.ops.import_scene.fbx(filepath=src)
+elif ext == ".ply":
+    bpy.ops.wm.ply_import(filepath=src)
+elif ext == ".stl":
+    bpy.ops.wm.stl_import(filepath=src)
 else:
     raise SystemExit(f"unsupported input {ext}")
 
