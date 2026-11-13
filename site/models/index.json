@@ -26,6 +26,29 @@
       "usdz": "models/totem-stanley-park.usdz"
     },
     {
+      "id": "inukshuk-english-bay",
+      "glb": "models/inukshuk-english-bay.glb",
+      "placement": "floor",
+      "scale": "fixed",
+      "height_m": 6.06,
+      "title": {
+        "zh": "英吉利灣因紐特石堆",
+        "en": "English Bay Inukshuk"
+      },
+      "caption": {
+        "zh": "溫哥華英吉利灣海濱的因紐特石堆（Inukshuk），1986 年世博會後由西北地區贈予溫哥華，是 2010 冬奧會標誌的原型。這是 6 公尺高的示意模型，以 USDZ 檔放進 scans/ 由 GitHub Actions 自動轉檔登記。真正的掃描完成後會換成實物。",
+        "en": "The Inukshuk on the English Bay seawall in Vancouver, a gift from the Northwest Territories after Expo 86 and the inspiration for the 2010 Winter Olympics emblem. This is a 6 m stylised stand-in that was dropped into scans/ as a USDZ and converted and registered by GitHub Actions. It will be replaced by a real scan."
+      },
+      "tour": {
+        "url": "https://xotours.ai/7554/%E6%BA%AB%E5%93%A5%E8%8F%AF%E4%B8%80%E5%A4%A9%E9%81%8A%20~%E7%B6%AD%E5%A4%9A%E8%8E%89%E4%BA%9E%2C%E6%83%A0%E6%96%AF%E5%8B%92%20City%20Tour",
+        "label": {
+          "zh": "溫哥華一天遊（7554）",
+          "en": "Vancouver one-day tour (7554)"
+        }
+      },
+      "credit": "Stylised stand-in built in Blender 4.5 and pushed through scans/ as a Y-up USDZ - not a scan"
+    },
+    {
       "id": "statue-demo",
       "glb": "models/statue-demo.glb",
       "placement": "floor",
