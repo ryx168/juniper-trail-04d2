@@ -1,3 +1,4 @@
 # models are built by the workflow, never committed
 site/models/*.glb
 site/models/*.usdz
+scripts/__pycache__/

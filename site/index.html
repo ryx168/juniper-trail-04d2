@@ -45,6 +45,7 @@
   .card .credit{font-size:11px;color:#6f7a89}
   #qr{display:block;width:100%;max-width:240px;margin:6px auto 8px;background:#fff;padding:10px;border-radius:10px}
   #qr canvas,#qr img{display:block;width:100%;height:auto}
+  .btn-alt{background:var(--panel2);color:var(--text);border:1px solid var(--line);padding:11px 14px;border-radius:12px;font-size:14px;width:100%}
   .only-phone{display:none}
   .is-phone .only-phone{display:block}
   .is-phone #arBtn.only-phone{display:flex}
@@ -108,6 +109,7 @@
         <div id="qr"></div>
         <p data-zh="電腦看不到 AR。用 iPhone 或 Android 相機掃這個碼，網頁開啟後按「放到我眼前」，雕像就會以實際大小出現在你的空間裡。" data-en="AR needs a phone. Scan this with the iPhone or Android camera, tap “View in your space” on the page that opens, and the statue appears life-size in your room.">電腦看不到 AR。用 iPhone 或 Android 相機掃這個碼，網頁開啟後按「放到我眼前」，雕像就會以實際大小出現在你的空間裡。</p>
       </div>
+      <button id="svBtn" class="btn-alt hidden" data-zh="改用 Google AR 檢視器" data-en="Open in Google AR viewer instead">改用 Google AR 檢視器</button>
       <div class="card only-phone">
         <h2 data-zh="怎麼用" data-en="How to">怎麼用</h2>
         <p data-zh="1. 按「放到我眼前」。 2. 把鏡頭對著地板慢慢移動，直到看到模型。 3. 拖曳移動、兩指旋轉，走近看細節。" data-en="1. Tap “View in your space”. 2. Point the camera at the floor and move slowly until the model appears. 3. Drag to move, two fingers to rotate, walk up for detail.">1. 按「放到我眼前」。 2. 把鏡頭對著地板慢慢移動，直到看到模型。 3. 拖曳移動、兩指旋轉，走近看細節。</p>
@@ -230,6 +232,20 @@
     } else {
       document.getElementById('noAr').classList.remove('hidden');
     }
+  });
+  // Android only: offer Google's Scene Viewer next to our tap-to-place mode
+  var svBtn = document.getElementById('svBtn');
+  if (/Android/i.test(navigator.userAgent)) svBtn.classList.remove('hidden');
+  svBtn.addEventListener('click', function(){
+    if (!current) return;
+    var glb = new URL(current.glb, location.href).href;
+    var title = (current.title && (current.title[lang] || current.title.en)) || 'XO Tours AR';
+    var intent = 'intent://arvr.google.com/scene-viewer/1.0?file=' + encodeURIComponent(glb) +
+      '&mode=ar_preferred&resizable=false&title=' + encodeURIComponent(title) +
+      '#Intent;scheme=https;package=com.google.android.googlequicksearchbox;action=android.intent.action.VIEW;' +
+      'S.browser_fallback_url=' + encodeURIComponent(location.href) + ';end;';
+    pageInfo('Scene Viewer button: ' + glb);
+    location.href = intent;
   });
   mv.addEventListener('load', function(){
     if (isPhone && !mv.canActivateAR && !xrOk) document.getElementById('noAr').classList.remove('hidden');

@@ -72,6 +72,121 @@
       "credit": "Stylised model of Thomas Gould's 1880 design (public domain), built in Blender 4.5 on GitHub Actions - not a scan"
     },
     {
+      "id": "steam-clock-gastown",
+      "glb": "models/steam-clock-gastown.glb",
+      "placement": "floor",
+      "scale": "fixed",
+      "height_m": 4.7,
+      "title": {
+        "zh": "煤氣鎮蒸汽鐘",
+        "en": "Gastown Steam Clock"
+      },
+      "caption": {
+        "zh": "溫哥華煤氣鎮的蒸汽鐘，每十五分鐘用蒸汽吹響汽笛報時。這是實際大小約 4.7 公尺的示意模型。",
+        "en": "Vancouver's Gastown steam clock whistles the quarter hours on steam. A life-size stand-in, about 4.7 m tall."
+      },
+      "tour": {
+        "url": "https://xotours.ai/7554/%E6%BA%AB%E5%93%A5%E8%8F%AF%E4%B8%80%E5%A4%A9%E9%81%8A%20~%E7%B6%AD%E5%A4%9A%E8%8E%89%E4%BA%9E%2C%E6%83%A0%E6%96%AF%E5%8B%92%20City%20Tour",
+        "label": {
+          "zh": "溫哥華一天遊（7554）",
+          "en": "Vancouver one-day tour (7554)"
+        }
+      },
+      "credit": "Stylised model built in Blender 4.5 on GitHub Actions - not a scan"
+    },
+    {
+      "id": "red-chairs-rockies",
+      "glb": "models/red-chairs-rockies.glb",
+      "placement": "floor",
+      "scale": "fixed",
+      "height_m": 1.2,
+      "title": {
+        "zh": "洛磯山紅椅",
+        "en": "Parks Canada red chairs"
+      },
+      "caption": {
+        "zh": "加拿大國家公園在觀景點擺放的紅色木椅，露易絲湖等地都有。實際大小的一對，可以放在客廳裡坐坐看。",
+        "en": "Parks Canada sets red Adirondack chairs at viewpoints, Lake Louise among them. A life-size pair to put in your living room."
+      },
+      "tour": {
+        "url": "https://xotours.ai/7616/2026%20%20%E6%B4%9B%E7%A3%AF%E5%B1%B1%E8%84%88%20%E3%80%90%E5%A4%A2%E5%B9%BB%E3%80%916%E6%88%967%E5%A4%A9%E4%B9%8B%E6%97%85",
+        "label": {
+          "zh": "洛磯山脈【夢幻】6或7天（7616）",
+          "en": "Canadian Rockies 6-7 day tour (7616)"
+        }
+      },
+      "credit": "Stylised model built in Blender 4.5 on GitHub Actions - not a scan"
+    },
+    {
+      "id": "pyramid-giza",
+      "glb": "models/pyramid-giza.glb",
+      "placement": "floor",
+      "scale": "fixed",
+      "height_m": 1.04,
+      "title": {
+        "zh": "吉薩大金字塔（1:150）",
+        "en": "Great Pyramid of Giza (1:150)"
+      },
+      "caption": {
+        "zh": "原高 146.6 公尺、底邊 230 公尺，這裡縮成 1:150，約 1 公尺高，放在桌上或地上剛好。",
+        "en": "146.6 m tall and 230 m along each side in real life, shown here at 1:150 so it is about 1 m tall on your table or floor."
+      },
+      "tour": {
+        "url": "https://xotours.ai/7564/2026%E5%B9%B4%2011-07%20%E5%9F%83%E5%8F%8A%E9%83%B5%E8%BC%AA%E3%80%81%E6%96%87%E6%98%8E%E5%8F%A4%E5%9C%8B%E6%B7%B1%E5%BA%A6%E9%81%8A12%E5%A4%A9",
+        "label": {
+          "zh": "埃及郵輪、文明古國12天（7564）",
+          "en": "Egypt cruise and ancient wonders, 12 days (7564)"
+        }
+      },
+      "credit": "Stylised model built in Blender 4.5 on GitHub Actions - not a scan"
+    },
+    {
+      "id": "leaning-tower-pisa",
+      "glb": "models/leaning-tower-pisa.glb",
+      "placement": "floor",
+      "scale": "fixed",
+      "height_m": 1.82,
+      "title": {
+        "zh": "比薩斜塔（1:30）",
+        "en": "Leaning Tower of Pisa (1:30)"
+      },
+      "caption": {
+        "zh": "約 56 公尺高、傾斜約 4 度的鐘樓，這裡縮成 1:30，大約和人一樣高。",
+        "en": "The 56 m bell tower that leans about 4 degrees, here at 1:30 so it stands about as tall as a person."
+      },
+      "tour": {
+        "url": "https://xotours.ai/7565/%E7%B6%B2%E6%83%85%E6%B7%B1%C2%B7%E7%BE%A9%E5%A4%A7%E5%88%A9%E4%B8%96%E7%95%8C%E9%81%BA%E7%94%A28%E6%99%9A9%E5%A4%A9%E7%B4%94%E7%8E%A9%E6%B7%B1%E5%BA%A6%E9%81%8A",
+        "label": {
+          "zh": "義大利世界遺產9天（7565）",
+          "en": "Italy World Heritage, 9 days (7565)"
+        }
+      },
+      "credit": "Stylised model built in Blender 4.5 on GitHub Actions - not a scan"
+    },
+    {
+      "id": "temple-of-heaven",
+      "glb": "models/temple-of-heaven.glb",
+      "placement": "floor",
+      "scale": "fixed",
+      "height_m": 1.53,
+      "title": {
+        "zh": "北京天壇祈年殿（1:20）",
+        "en": "Temple of Heaven, Beijing (1:20)"
+      },
+      "caption": {
+        "zh": "天壇祈年殿：三層藍色琉璃瓦圓頂，坐在三層漢白玉台基上。殿本身縮成 1:20；台基縮得更多，才放得進房間。",
+        "en": "The Hall of Prayer for Good Harvests: three blue-tiled roofs on a three-tier marble terrace. The hall is at 1:20; the terrace is cut down further so it fits a room."
+      },
+      "tour": {
+        "url": "https://xotours.ai/7584/%E4%B8%AD%E5%9B%BD%E7%BB%8F%E5%85%B8%C2%B7%E5%8C%97%E4%BA%AC%E8%A5%BF%E5%AE%89%E4%B8%8A%E6%B5%B78%E6%99%9A9%E5%A4%A9%E5%93%81%E8%B4%A8%E7%B4%94%E7%8E%A9%EF%BC%88%E7%A7%81%E5%AE%B6%E5%9B%A2%EF%BC%89--",
+        "label": {
+          "zh": "中國經典 北京西安上海9天（7584）",
+          "en": "Classic China: Beijing, Xi'an, Shanghai, 9 days (7584)"
+        }
+      },
+      "credit": "Stylised model built in Blender 4.5 on GitHub Actions - not a scan"
+    },
+    {
       "id": "statue-demo",
       "glb": "models/statue-demo.glb",
       "placement": "floor",
