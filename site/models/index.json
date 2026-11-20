@@ -49,6 +49,29 @@
       "credit": "Stylised stand-in built in Blender 4.5 and pushed through scans/ as a Y-up USDZ - not a scan"
     },
     {
+      "id": "kamehameha-honolulu",
+      "glb": "models/kamehameha-honolulu.glb",
+      "placement": "floor",
+      "scale": "fixed",
+      "height_m": 5.87,
+      "title": {
+        "zh": "卡美哈梅哈一世國王像",
+        "en": "King Kamehameha I statue"
+      },
+      "caption": {
+        "zh": "夏威夷王國第一任國王卡美哈梅哈一世的雕像，立在檀香山阿里伊奧拉尼宮前，是歐胡島市區觀光的一站。原作由湯瑪斯·古爾德於 1880 年設計：金色羽毛披風、羽毛頭盔與腰帶，左手握矛，右手高舉。這是依原作造型做的示意模型，比例為約略值。真正的掃描完成後會換成實物。",
+        "en": "King Kamehameha I, first king of the Hawaiian Kingdom, stands in front of Aliʻiōlani Hale in Honolulu, a stop on the Oahu city tour. Thomas Gould's 1880 design gives him a gilded feather cloak, helmet and sash, a spear in his left hand and his right arm raised. This is a stylised stand-in with approximate proportions. It will be replaced by a real scan."
+      },
+      "tour": {
+        "url": "https://xotours.ai/7373",
+        "label": {
+          "zh": "夏威夷歐胡島＋茂宜島＋火山島 6 日遊（7373）",
+          "en": "Hawaii: Oahu, Maui and Big Island 6-day tour (7373)"
+        }
+      },
+      "credit": "Stylised model of Thomas Gould's 1880 design (public domain), built in Blender 4.5 on GitHub Actions - not a scan"
+    },
+    {
       "id": "statue-demo",
       "glb": "models/statue-demo.glb",
       "placement": "floor",
